@@ -1,11 +1,11 @@
 import unittest
-from botanix.handling_context import HandlingContext
+from botanix.handling import HandlingContext
 
 class SerialisationTestCase(unittest.TestCase):
 
   def test_serial(self):
     ctx = HandlingContext(123, 'can')
-    ctx.add_custom('one', 2)
+    ctx.put_custom('one', 2)
     s = ctx.to_string()
     print(s)
     ctx2 = HandlingContext.from_string(s)
