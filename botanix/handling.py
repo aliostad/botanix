@@ -96,6 +96,7 @@ class HandlingResult:
 # signature similar to `handle` method here:
 #     (self, command: str, update: Update, context: dict) -> HandlingResult
 # The method can have any name but needs to end with _<step number>.
+# Step numbers are 0-based with the entry to a track is 0 (e.g. handle_0) and so on.
 # The level the user is at would then matched to the step of the track.
 # At runtime, all these methods will be discovered (when main handler calls `ensure_tracks_built`)
 # Steps within the track will be routed via the _<n> (where <n> is step) in the name
