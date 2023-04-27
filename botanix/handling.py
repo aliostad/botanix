@@ -2,6 +2,8 @@ import json
 from botanix.conversion_helper import *
 from telegram import Update
 import inspect
+import re
+
 
 class UnhandledMessage(Exception):
   def __init__(self, *args):
@@ -9,20 +11,27 @@ class UnhandledMessage(Exception):
 
 
 class HandlingContext:
-  def __init__(self, uid:int, track_name:str):
+  def __init__(self, uid:int, track_name:str, step:int=0):
     self.uid = uid
     self.track_name = track_name
     self.custom = {}
     self.timestamp = get_time_as_decimal()
+    self.step = step
 
   def put_custom(self, key:str, val):
     """
-
+    Puts a custom value in the context
     :param key:
     :param val: must be serialisable
     :return:
     """
     self.custom[key] = val
+
+  def move_to_next(self):
+    self.step += 1
+
+  def override_step(self, step:int):
+    self.step = step
 
   def get_custom(self, key:str):
     return self.custom[key]
@@ -98,10 +107,10 @@ class BaseHandler:
   def __init__(self):
     self.step_handlers = None
 
-  def handle(self, command: str, update: Update, context: dict) -> HandlingResult:
+  def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     self.ensure_tracks_built()
-    uid = context[ContextFields.Uid]
-    step = context[ContextFields.Step]
+    uid = context.uid
+    step = context.step
     if step not in self.step_handlers:
       raise UnhandledMessage(
         f'Step {step} does not exist in class {self.__class__.__name__}. Command was {command} and user id {uid}')
@@ -149,7 +158,7 @@ class BaseContextRepo:
     """
     pass
 
-  def put_context(self, uid: int, context: dict) -> None:
+  def put_context(self, uid: int, context: HandlingContext) -> None:
     """
     Updates the stored context
     :param uid:
@@ -184,9 +193,9 @@ class MainHandler:
     m = re.match(MainHandler.command_pattern, message_text)
     if m is None:
       if ctx is None:
-        return HandlingResult.unhandled_result('گزینه شما موجود نیست.')
+        return HandlingResult.unhandled_result('Your choice does not exist.')
       else:
-        track_name = ctx[ContextFields.TrackName]
+        track_name = ctx.track_name
         if track_name not in self.handlers:
           raise UnhandledMessage(f'Could not find a handler for command {message_text}')
         return self._do_handle(uid, message_text, update, ctx, track_name)
@@ -195,18 +204,18 @@ class MainHandler:
       if class_command not in self.handlers:
         raise UnhandledMessage(f'Could not find a handler for command {message_text}')
       if class_command in MainHandler.generic_handler_names:
-        ctx = {ContextFields.Step: 0, ContextFields.Uid: uid} # create a dummy context for step 0
+        ctx = HandlingContext(uid, track_name=class_command) # create a dummy context and not store since they do not have follow up
       else:
         ctx = self.repo.new_context(uid, class_command)  # renew context
       return self._do_handle(uid, message_text, update, ctx, class_command)
 
-  def _do_handle(self, uid: int, command: str, update: Update, context: dict, class_command: str) -> HandlingResult:
+  def _do_handle(self, uid: int, command: str, update: Update, context: HandlingContext, class_command: str) -> HandlingResult:
     result = self.handlers[class_command].handle(command, update, context)
     if result.handled and not result.is_terminal:
       if result.step_override is None:
-        context[ContextFields.Step] += 1  # increase the step
+        context.move_to_next()  # increase the step
       else:
-        context[ContextFields.Step] = result.step_override  # increase the step
+        context.override_step(result.step_override)  # change the step
       self.repo.put_context(uid, context)
     if result.is_terminal:
       self.repo.clear_context(uid)
