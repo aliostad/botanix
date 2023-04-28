@@ -88,17 +88,27 @@ class HandlingResult:
   def new_track_result(new_track_name:str, new_step:int):
     return HandlingResult(handled=True, step_override=new_step, new_track_name=new_track_name)
 
+
+
+def track_name(name: str):
+  def real_track_name_fn(cls):
+    setattr(cls, 'track_name', name)
+    return cls
+  return real_track_name_fn
+
+
 # This is the base class for handlers. A handler class will inherit BaseHandler
 # will implement all functionality of a track.
 # The name of the class must be `<track name>Handler` e.g. command
 # /register will load RegisterHandler
+# You can alternatively use the decorator @track_name to define name of the track.
 # This class will handle ALL its steps by creating one or more methods for each step, with a
 # signature similar to `handle` method here:
 #     (self, command: str, update: Update, context: dict) -> HandlingResult
 # The method can have any name but needs to end with _<step number>.
 # DO NOT override the Handle of the base class as the magic of finding the right method happens there.
 # Step numbers are 0-based with the entry to a track is 0 (e.g. handle_0) and so on.
-# The level the user is at would then matched to the step of the track.
+# The level the user is at would then be matched to the step of the track.
 # At runtime, all these methods will be discovered (when main handler calls `ensure_tracks_built`)
 # Steps within the track will be routed via the _<n> (where <n> is step) in the name
 #
@@ -110,7 +120,7 @@ class BaseHandler:
     self.step_handlers = None
 
   def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
-    self.ensure_tracks_built()
+    self.ensure_steps_built()
     uid = context.uid
     step = context.step
     if step not in self.step_handlers:
@@ -124,13 +134,17 @@ class BaseHandler:
     return last_result
 
   def get_class_name(self):
-    return self.__class__.__name__.lower().replace('handler', '')
+    if hasattr(self.__class__, 'track_name'):
+      return self.__class__.track_name.lower()
+    else:
+      return self.__class__.__name__.lower().replace('handler', '')
 
-  def ensure_tracks_built(self):
+  def ensure_steps_built(self):
     if self.step_handlers is not None:
       return
     self.step_handlers = {}
     for name, func in inspect.getmembers(self, inspect.ismethod):
+
       m = re.match(BaseHandler.handler_method_pattern, name)
       if m is not None:
         step = int(m.groups()[0])

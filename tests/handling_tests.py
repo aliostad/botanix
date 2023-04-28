@@ -1,5 +1,5 @@
 import unittest
-from botanix.handling import HandlingContext, MainHandler, BaseHandler, HandlingResult
+from botanix.handling import HandlingContext, MainHandler, BaseHandler, HandlingResult, track_name
 from tests import DictionaryBasedContextRepo
 from telegram import Update
 
@@ -12,7 +12,8 @@ class Command2Handler(BaseHandler):
   def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.terminal_result()
 
-class Command3Handler(BaseHandler):
+@track_name('Command3')
+class CommandThreeHandler(BaseHandler):
   def handle_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.success_result()
 
@@ -37,7 +38,7 @@ class SimpleWorkflowTests(unittest.TestCase):
   def test_3_steps(self):
     h = MainHandler(DictionaryBasedContextRepo(),
                     Command1Handler(), Command2Handler(),
-                    Command3Handler())
+                    CommandThreeHandler())
     r1 = h.handle(123, '/Command3', None)
     self.assertEqual(True, r1.handled)
     self.assertEqual(False, r1.is_terminal)
