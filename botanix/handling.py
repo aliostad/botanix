@@ -83,9 +83,8 @@ class HandlingResult:
   def override_step_result(new_step:int):
     return HandlingResult(handled=True, step_override=new_step)
 
-
   @staticmethod
-  def new_track_result(new_track_name:str, new_step:int):
+  def new_track_result(new_track_name:str, new_step:int=0):
     return HandlingResult(handled=True, step_override=new_step, new_track_name=new_track_name)
 
 

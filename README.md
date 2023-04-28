@@ -67,7 +67,12 @@ def get_update(event, context):
 ### Tracks and steps
 The workflow contains two main concepts: *Tracks* and *Steps*. A track is made of steps (zero-based) and represents a top level functionality of the bot, e.g. Help (typically triggered by `/help` command) or Register, etc. Once in a track, the user navigates through various steps of the workflow until it completes or abandons the track.
 
-In botanix, a track is represented by a class. For example, registration track typically started by receiving `/register` command is by convention implemented in a class named `RegisterHandler`.
+In botanix, a track is represented by a class, inherited from `BaseHandler`. For example, registration track typically started by receiving `/register` command is by convention implemented in a class named `RegisterHandler`.
+
+```python
+class RegisterHandler(BaseHandler):
+  pass
+```
 
 If you do not want to stick to the convention, you can define the track name using the `@track_name` decorator:
 
@@ -85,13 +90,61 @@ Within a track, represented by a class, each step is implemented as a method wit
     method_<step number>(self, command: str, update: Update, context: HandlingContext) -> HandlingResult
 ```
 
-Name of the needs to have zero-based `_<step number>` as a suffix. This method will handle the first step:
+Name of the method needs to have zero-based `_<step number>` as a suffix. This method will handle the first step:
 
 ```python
-def registeration_step_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+def registration_step_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
   pass
 ```
 
+Alternatively, you can use `@step_number` decorator to achieve the same thing:
 
+```python
+@step_number(0)
+def start_registration(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  pass
+```
 
+It is possible to have more than one method for a step in which case, following a [Chain-of-responsibility pattern](https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern), the methods will be called in succession until one of them successfully handles the update, and it will then short-circuit and return. Ordering of the calls cannot be guaranteed and is controlled by the order python's `inspect` operates.
 
+### HandlingResult
+After receiving an update, a handler method could signal back as below:
+
+#### 1) Successful handling
+It handles the update, sends appropriate actions (typically via `Bot` object) and then returns a *handled* result:
+
+```python
+return HandlingResult.success_result()
+```
+
+This is simply a shortcut for creating an instance of `HandlingResult` and setting appropriate attributes needed to signal successful handling.
+
+#### 2) Successful handling and closing the track
+It handles the update, sends appropriate actions (typically via `Bot` object) and then returns a *terminal* result:
+
+```python
+return HandlingResult.terminal_result()
+```
+
+#### 3) Successful handling but changing the next step
+It handles the update but overrides what the next the step would be (typically it would be `current_step+1`). This could be handy to shortcut to higher steps missing unnecessary steps or sending back to start, etc.
+
+```python
+return HandlingResult.override_step_result(3)
+```
+
+#### 4) Successful handling but changing the track
+It handles the update but totally changes the current track starting from step 0 (or any other step)
+
+```python
+return HandlingResult.new_track_name('SomeOtherTrack', new_step=42)
+
+```
+
+#### 5) Unsuccessful handling
+The method is unable to handle (most likely due to bad user input). In this case, the user stays at the same track and the same step.
+
+```python
+return HandlingResult.unhandled_result('Input is invalid. Please try again')
+
+```
