@@ -16,10 +16,10 @@ class Command3Handler(BaseHandler):
   def handle_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.success_result()
 
-  def handle_1(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  def handle_or_waht_1(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.success_result()
 
-  def handle_2(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  def does_not_matter_2(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.terminal_result()
 
 
