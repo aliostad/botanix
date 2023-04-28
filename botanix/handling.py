@@ -89,12 +89,22 @@ class HandlingResult:
     return HandlingResult(handled=True, step_override=new_step, new_track_name=new_track_name)
 
 
-
+"""
+A decorator for defining the track name if naming convention of the class name is not followed
+on classes inheriting BaseHandler
+"""
 def track_name(name: str):
   def real_track_name_fn(cls):
     setattr(cls, 'track_name', name)
     return cls
   return real_track_name_fn
+
+def step_number(step:int):
+  def real_step_number(fn):
+    setattr(fn, 'step_number', step)
+    return fn
+  return real_step_number
+
 
 
 # This is the base class for handlers. A handler class will inherit BaseHandler
@@ -144,10 +154,14 @@ class BaseHandler:
       return
     self.step_handlers = {}
     for name, func in inspect.getmembers(self, inspect.ismethod):
-
-      m = re.match(BaseHandler.handler_method_pattern, name)
-      if m is not None:
-        step = int(m.groups()[0])
+      step = None
+      if hasattr(func, 'step_number'):
+        step = func.step_number
+      else:
+        m = re.match(BaseHandler.handler_method_pattern, name)
+        if m is not None:
+          step = int(m.groups()[0])
+      if step is not None:
         if step not in self.step_handlers:
           self.step_handlers[step] = []
         self.step_handlers[step].append(func)

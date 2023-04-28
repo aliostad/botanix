@@ -1,5 +1,5 @@
 import unittest
-from botanix.handling import HandlingContext, MainHandler, BaseHandler, HandlingResult, track_name
+from botanix.handling import HandlingContext, MainHandler, BaseHandler, HandlingResult, track_name, step_number
 from tests import DictionaryBasedContextRepo
 from telegram import Update
 
@@ -17,7 +17,8 @@ class CommandThreeHandler(BaseHandler):
   def handle_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.success_result()
 
-  def handle_or_waht_1(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  @step_number(1)
+  def handle_or_waht(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.success_result()
 
   def does_not_matter_2(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
