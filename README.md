@@ -2,9 +2,9 @@
 **A Telegram bot mini-framework for handling the workflow**
 
 ## Why may I need botanix
-Developing [Telegram bots](https://core.telegram.org/bots/api) is fairly easy: all that it requires is to set up a web hook to receive messages (`update`s) from users and respond to them. The messages, however, are stateless and the bot itself is meant to maintain the state and track where each user has been in its interaction in order to be able to route the message to the correct handler and navigate the user through the workflow. Without a simple framework, the code quickly turns into a mess. 
+Developing [Telegram bots](https://core.telegram.org/bots/api) is fairly easy: all that it requires is to set up a webhook to receive messages (`update`s) from users and respond to them. The messages, however, are stateless and the bot itself is meant to maintain the state and track where each user has been in its interaction in order to be able to route the message to the correct handler and navigate the user through the workflow. Without a simple framework, the code quickly turns into a mess. 
 
-**Botanix** makes it easy for Telegram bot developers to define the workflow of their python bots in code according to simple conventions (essentially "declare" the workflow) and Botanix wires up the workflow and sends the messages to the right handler.
+**botanix** makes it easy for Telegram bot developers to define the workflow of their python bots in code according to simple conventions (essentially "declare" the workflow) and Botanix wires up the workflow and sends the messages to the right handler.
 
 ## Getting started
 To install, use pip:
@@ -51,11 +51,11 @@ def get_update(event, context):
     message = update.effective_message.text
     
     # DynamoDB-based repo for storing context
-    repo = DdbRepo()
+    store = DdbStore()
     bot = Bot(bot_token)
     
     # create MainHandler with instances of all handlers
-    m = MainHandler(repo, RegisterHandler(bot), ...)    
+    m = MainHandler(store, RegisterHandler(bot), ...)    
     result = m.handle(uid, message, update)
 
     # based on result interact
@@ -147,4 +147,42 @@ The method is unable to handle (most likely due to bad user input). In this case
 ```python
 return HandlingResult.unhandled_result('Input is invalid. Please try again')
 
+```
+
+### Context
+As discussed, the webhook receiving the messages is completely stateless and piecing together and making sense of where a user is in its journey poses the main challenge for otherwise simple request-response paradigm of a Telegram bot. 
+
+`botanix` introduces a simple bag as the `HandlingContext` which is responsible to keep track of where a user is in its journey. More importantly, it allows a simple means to store user input as the user moves through subsequent steps, e.g. filling a multi-field form in each step.
+
+
+#### Persistence
+The context, for all but the most trivial use cases, must be persisted: the store must implement `BaseContextStore`. `botanix` supplies an in-memory storage for test purpose but you can simply implement persistence over any key-value store (Redis, DynamoDb, traditional RDBMS, NATS KV, etc). The key is always Telegram's User ID, namely `uid`.
+
+These persistence stores will be provided as separate python packages.
+
+## Wire-up: MainHandler
+As demonstrated in the example above, the webhook receives the Update in the persisted format. In `botanix`, responsibility of brokering Telegram messages a.k.a "updates" to your handler classes inherited from `BaseHandler`. 
+
+`MainHandler` is instantiated by providing a context persistence store along with all your handler classes passed as instances.
+
+```python
+m = MainHandler(store, RegisterHandler(bot), HelpHandler(bot), ...)
+```
+
+Upon receiving the update from Telegram in your webhook, extract User ID and message of the text and pass to to your MainHandler instance:
+
+```python
+result = m.handle(uid, message, update)
+```
+
+Considering this call can raise error, you need to do it in a `try` block. Once a result is returned, check for if it is handled
+
+```python
+  try:
+    result = m.handle(uid, message, u)
+    if not result.handled:
+      bot.send_message(uid, text='Sorry did not get it.')
+  except Exception as ex:
+    traceback.print_exc()
+    bot.send_message(uid, text='There was an error. Please try again.')
 ```

@@ -166,9 +166,9 @@ class BaseHandler:
         self.step_handlers[step].append(func)
 
 
-class BaseContextRepo:
+class BaseContextStore:
   """
-  Main interface for context repository
+  Main interface for context store/repository
   """
   def get_active_context(self, uid: int) -> HandlingContext:
     """
@@ -210,15 +210,15 @@ class MainHandler:
   command_pattern = '^/([A-Za-z0-9]+)$'  # like /start or /Register
   generic_handler_names = ['help', 'start']
 
-  def __init__(self, repo: BaseContextRepo, *list_of_handlers: BaseHandler):
+  def __init__(self, store: BaseContextStore, *list_of_handlers: BaseHandler):
     self.handlers = {}
-    self.repo = repo
+    self.store = store
     for h in list_of_handlers:
       self.handlers[h.get_class_name()] = h
 
   def handle(self, uid: int, message_text: str, update: Update) -> HandlingResult:
     message_text = message_text.lower()
-    ctx = self.repo.get_active_context(uid)
+    ctx = self.store.get_active_context(uid)
     m = re.match(MainHandler.command_pattern, message_text)
     if m is None:
       if ctx is None:
@@ -235,7 +235,7 @@ class MainHandler:
       if class_command in MainHandler.generic_handler_names:
         ctx = HandlingContext(uid, track_name=class_command) # create a dummy context and not store since they do not have follow up
       else:
-        ctx = self.repo.new_context(uid, class_command)  # renew context
+        ctx = self.store.new_context(uid, class_command)  # renew context
       return self._do_handle(uid, message_text, update, ctx, class_command)
 
   def _do_handle(self, uid: int, command: str, update: Update, context: HandlingContext, class_command: str) -> HandlingResult:
@@ -245,8 +245,8 @@ class MainHandler:
         context.move_to_next()  # increase the step
       else:
         context.override_step(result.step_override)  # change the step
-      self.repo.put_context(uid, context)
+      self.store.put_context(uid, context)
     if result.is_terminal:
-      self.repo.clear_context(uid)
+      self.store.clear_context(uid)
     return result
 

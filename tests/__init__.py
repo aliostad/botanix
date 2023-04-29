@@ -1,5 +1,5 @@
-from botanix.handling import BaseContextRepo, HandlingContext
-class DictionaryBasedContextRepo(BaseContextRepo):
+from botanix.handling import BaseContextStore, HandlingContext
+class DictionaryBasedContextStore(BaseContextStore):
 
   def __init__(self):
     self.contexts = {}
