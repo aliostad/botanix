@@ -11,9 +11,9 @@ class UnhandledMessage(Exception):
 
 
 class HandlingContext:
-  def __init__(self, uid:int, track_name:str, step:int=0):
+  def __init__(self, uid:int, track_nam:str, step:int=0):
     self.uid = uid
-    self.track_name = track_name
+    self.track_name = track_nam
     self.custom = {}
     self.timestamp = get_time_as_decimal()
     self.step = step
@@ -233,7 +233,7 @@ class MainHandler:
       if class_command not in self.handlers:
         raise UnhandledMessage(f'Could not find a handler for command {message_text}')
       if class_command in MainHandler.generic_handler_names:
-        ctx = HandlingContext(uid, track_name=class_command) # create a dummy context and not store since they do not have follow up
+        ctx = HandlingContext(uid, track_nam=class_command) # create a dummy context and not store since they do not have follow up
       else:
         ctx = self.store.new_context(uid, class_command)  # renew context
       return self._do_handle(uid, message_text, update, ctx, class_command)
