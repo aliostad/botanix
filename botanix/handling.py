@@ -239,7 +239,7 @@ class MainHandler:
       return await self._do_handle(uid, message_text, update, ctx, class_command)
 
   async def _do_handle(self, uid: int, command: str, update: Update, context: HandlingContext, class_command: str) -> HandlingResult:
-    result = await self.handlers[class_command].handle(uid, command, update, context)
+    result = await self.handlers[class_command].handle( command, update, context)
     if result.handled and not result.is_terminal:
       if result.step_override is None:
         context.move_to_next()  # increase the step

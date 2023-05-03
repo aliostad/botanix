@@ -16,8 +16,7 @@ class HelpHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  async def send_help(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def send_help(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     await self.bot.send_message(context.uid, """
     You may choose:
     /start to start again
@@ -34,8 +33,7 @@ class StartHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  async def start(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def start(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     await self.bot.send_message(context.uid, """
     Welcome to our bot!
     You may choose:
@@ -57,15 +55,13 @@ class RegisterHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  async def ask_for_name(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def ask_for_name(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     await self.bot.send_message(context.uid, "Please enter your first name:")
 
     return HandlingResult.success_result()
 
   @step_number(1)
-  async def ask_for_surname(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def ask_for_surname(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     nam = command.strip()
     if len(nam) < 3:
       await self.bot.send_message(context.uid, "First name must be at least 3 characters. Try again.")
@@ -76,8 +72,7 @@ class RegisterHandler(BaseHandler):
       return HandlingResult.success_result()
 
   @step_number(2)
-  async def ask_for_email(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def ask_for_email(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     surnam = command.strip()
     if len(surnam) < 3:
       await self.bot.send_message(context.uid, "Surname must be at least 3 characters. Try again.")
@@ -88,8 +83,7 @@ class RegisterHandler(BaseHandler):
       return HandlingResult.success_result()
 
   @step_number(3)
-  async def ask_for_email(self, uid: int, command: str, update: Update,
-                context: HandlingContext, class_command: str) -> HandlingResult:
+  async def ask_for_email(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     email = command.strip()
     if re.match('.+@.+\..+', email) is None:
       await self.bot.send_message(context.uid, "Not a valid email. Try again.")
@@ -190,7 +184,8 @@ def webhook_handler(event, context):
   return loop.run_until_complete(asyncio.gather(do_handle(event, context)))
 
 def extract(body: str) -> (Update, int, int):
-  u = Update.de_json(json.loads(body), None)
+  j = json.loads(body)
+  u = Update.de_json(j, None)
   uid = None
   epoch = -1
   if u.effective_user is None:
