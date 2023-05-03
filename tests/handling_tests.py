@@ -3,7 +3,6 @@ from botanix.handling import HandlingContext, MainHandler, BaseHandler, Handling
 from tests import DictionaryBasedContextStore
 from telegram import Update
 
-
 class Command1Handler(BaseHandler):
   async def handle_0(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.terminal_result()
@@ -25,7 +24,7 @@ class CommandThreeHandler(BaseHandler):
     return HandlingResult.terminal_result()
 
 
-class SimpleWorkflowTests(unittest.TestCase):
+class SimpleWorkflowTests(unittest.IsolatedAsyncioTestCase):
 
   async def test_simple_workflow(self):
     h = MainHandler(DictionaryBasedContextStore(), Command1Handler(), Command2Handler())
