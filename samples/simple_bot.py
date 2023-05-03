@@ -16,7 +16,7 @@ class HelpHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  def send_help(self, uid: int, command: str, update: Update,
+  async def send_help(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     await self.bot.send_message(context.uid, """
     You may choose:
@@ -34,7 +34,7 @@ class StartHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  def start(self, uid: int, command: str, update: Update,
+  async def start(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     await self.bot.send_message(context.uid, """
     Welcome to our bot!
@@ -57,14 +57,14 @@ class RegisterHandler(BaseHandler):
     self.bot = bot
 
   @step_number(0)
-  def ask_for_name(self, uid: int, command: str, update: Update,
+  async def ask_for_name(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     await self.bot.send_message(context.uid, "Please enter your first name:")
 
     return HandlingResult.success_result()
 
   @step_number(1)
-  def ask_for_surname(self, uid: int, command: str, update: Update,
+  async def ask_for_surname(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     nam = command.strip()
     if len(nam) < 3:
@@ -76,7 +76,7 @@ class RegisterHandler(BaseHandler):
       return HandlingResult.success_result()
 
   @step_number(2)
-  def ask_for_email(self, uid: int, command: str, update: Update,
+  async def ask_for_email(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     surnam = command.strip()
     if len(surnam) < 3:
@@ -88,7 +88,7 @@ class RegisterHandler(BaseHandler):
       return HandlingResult.success_result()
 
   @step_number(3)
-  def ask_for_email(self, uid: int, command: str, update: Update,
+  async def ask_for_email(self, uid: int, command: str, update: Update,
                 context: HandlingContext, class_command: str) -> HandlingResult:
     email = command.strip()
     if re.match('.+@.+\..+', email) is None:
@@ -139,9 +139,7 @@ class S3ContextStore(BaseContextStore):
       hc.custom = j['custom']
       return hc
     except ClientError as e:
-      print('Vafa!!')
-      print(e)
-      if e.response['Error']['Code'] == "404":
+      if e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
         return None
       else:
         raise
@@ -180,7 +178,6 @@ async def do_handle(event, context):
           "statusCode": 200
         }
   except Exception as e:
-    traceback.print_exc()
     print(e)
     return {
         "statusCode": 500,
