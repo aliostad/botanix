@@ -178,11 +178,11 @@ class BaseContextStore:
     """
     pass
 
-  def new_context(self, uid: int, track_name: str) -> HandlingContext:
+  def new_context(self, uid: int, track_nam: str) -> HandlingContext:
     """
     Creates, stores and returns a new context
     :param uid:
-    :param track_name:
+    :param track_nam:
     :return:
     """
     pass
@@ -224,10 +224,10 @@ class MainHandler:
       if ctx is None:
         return HandlingResult.unhandled_result('Your choice does not exist.')
       else:
-        track_name = ctx.track_name
-        if track_name not in self.handlers:
+        track_nam = ctx.track_name
+        if track_nam not in self.handlers:
           raise UnhandledMessage(f'Could not find a handler for command {message_text}')
-        return self._do_handle(uid, message_text, update, ctx, track_name)
+        return self._do_handle(uid, message_text, update, ctx, track_nam)
     else:  # this is a top level command (start of a track)
       class_command = m.groups()[0]  # is the same as track_name
       if class_command not in self.handlers:

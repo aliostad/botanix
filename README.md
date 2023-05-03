@@ -186,3 +186,9 @@ Considering this call can raise error, you need to do it in a `try` block. Once 
     traceback.print_exc()
     bot.send_message(uid, text='There was an error. Please try again.')
 ```
+
+### Special Handlers: StartHandler and HelpHandler
+`botanix` considers Help and Start as generic handlers and treats them slightly differently in the sense that the updates that have `/start` or `/help` will be treated as calling them even if the user is midway in an established track. This means that if, for example, your `RegisterHandler` asks user's name and in response, the user types `/start`, then this message will not be received by that handler but by your `StartHandler`.
+
+This behaviour is governed by `MainHandler.generic_handler_names` which has the value `['help', 'start']`. You can change this behaviour by setting it to `[]` but typically you are meant to create `StartHandler` and `HelpHandler` and this behaviour is desirable since it provides a short-circuit to start again or see the help output.
+

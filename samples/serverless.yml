@@ -1,0 +1,31 @@
+service: botanix-sample-bot
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  environment:
+    BOT_TOKEN: ${env:TEL_SIMPLE_BOT_TOKEN}  # Make sure you set this variable
+
+functions:
+  bot_webhook:
+    handler:   simple_bot.webhook_handler
+    role: arn:aws:iam::086257586684:role/simple_bot_handler # CHANGE
+    reservedConcurrency: 1
+    events:
+      - httpApi:
+          path: /simple_bot_webhook  # CHANGE
+          method: post
+
+package:
+  exclude:
+    - node_modules/**
+    - .ipynb_checkpoints/**
+    - playground.ipynb
+    - node_modules/**
+    - README.md
+
+plugins:
+  - serverless-python-requirements
