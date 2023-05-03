@@ -128,7 +128,7 @@ class BaseHandler:
   def __init__(self):
     self.step_handlers = None
 
-  def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  async def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     self.ensure_steps_built()
     uid = context.uid
     step = context.step
@@ -137,7 +137,7 @@ class BaseHandler:
         f'Step {step} does not exist in class {self.__class__.__name__}. Command was {command} and user id {uid}')
     last_result = HandlingResult.success_result()
     for h in self.step_handlers[step]:
-      last_result = h(command, update, context)
+      last_result = await h(command, update, context)
       if last_result.handled:
         return last_result # break out
     return last_result
@@ -216,7 +216,7 @@ class MainHandler:
     for h in list_of_handlers:
       self.handlers[h.get_class_name()] = h
 
-  def handle(self, uid: int, message_text: str, update: Update) -> HandlingResult:
+  async def handle(self, uid: int, message_text: str, update: Update) -> HandlingResult:
     message_text = message_text.lower()
     ctx = self.store.get_active_context(uid)
     m = re.match(MainHandler.command_pattern, message_text)
@@ -227,7 +227,7 @@ class MainHandler:
         track_nam = ctx.track_name
         if track_nam not in self.handlers:
           raise UnhandledMessage(f'Could not find a handler for command {message_text}')
-        return self._do_handle(uid, message_text, update, ctx, track_nam)
+        return await self._do_handle(uid, message_text, update, ctx, track_nam)
     else:  # this is a top level command (start of a track)
       class_command = m.groups()[0]  # is the same as track_name
       if class_command not in self.handlers:
@@ -236,10 +236,10 @@ class MainHandler:
         ctx = HandlingContext(uid, track_nam=class_command) # create a dummy context and not store since they do not have follow up
       else:
         ctx = self.store.new_context(uid, class_command)  # renew context
-      return self._do_handle(uid, message_text, update, ctx, class_command)
+      return await self._do_handle(uid, message_text, update, ctx, class_command)
 
-  def _do_handle(self, uid: int, command: str, update: Update, context: HandlingContext, class_command: str) -> HandlingResult:
-    result = self.handlers[class_command].handle(command, update, context)
+  async def _do_handle(self, uid: int, command: str, update: Update, context: HandlingContext, class_command: str) -> HandlingResult:
+    result = await self.handlers[class_command].handle(command, update, context)
     if result.handled and not result.is_terminal:
       if result.step_override is None:
         context.move_to_next()  # increase the step
