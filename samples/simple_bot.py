@@ -7,6 +7,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 import os
+import asyncio
 
 class HelpHandler(BaseHandler):
 
@@ -149,7 +150,7 @@ class S3ContextStore(BaseContextStore):
     o = self.bucket.Object(self._get_name(str(uid)))
     o.put(json.dumps(context))
 
-def webhook_handler(event, context):
+async def do_handle(event, context):
   try:
     if 'BOT_TOKEN' not in os.environ:
       print('Bot token env var not defined.')
@@ -168,7 +169,7 @@ def webhook_handler(event, context):
       uid = u.effective_user.id
       message = u.effective_message.text
       try:
-        result = m.handle(uid, message, u)
+        result = await m.handle(uid, message, u)
         if not result.handled:
           await bot.send_message(uid, text='Sorry did not get it.')
           print(result.unhandled_message)
@@ -186,6 +187,10 @@ def webhook_handler(event, context):
         "body": str(e)
     }
 
+
+def webhook_handler(event, context):
+  loop = asyncio.get_event_loop()
+  return loop.run_until_complete(asyncio.gather(do_handle(event, context)))
 
 def extract(body: str) -> (Update, int, int):
   u = Update.de_json(json.loads(body), None)
