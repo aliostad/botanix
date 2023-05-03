@@ -1,1 +1,1 @@
-botanix==0.2.1
+botanix==0.2.2
