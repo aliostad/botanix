@@ -117,8 +117,8 @@ class S3ContextStore(BaseContextStore):
 
   def new_context(self, uid: int, track_nam: str) -> HandlingContext:
     hc = HandlingContext(uid, track_nam)
-    o = self.bucket.Object(self._get_name(str(uid)))
-    o.put(json.dumps(hc))
+    self.put_context(hc)
+    return hc
 
   def clear_context(self, uid: int):
     o = self.bucket.Object(self._get_name(str(uid)))
@@ -128,19 +128,16 @@ class S3ContextStore(BaseContextStore):
     o = self.bucket.Object(self._get_name(str(uid)))
     try:
       jtext = o.get()['Body'].read().decode('utf-8')
-      j = json.loads(jtext)
-      hc = HandlingContext(j['uid'], j['track_name'], j['step'])
-      hc.custom = j['custom']
-      return hc
+      return HandlingContext.from_json_string(jtext)
     except ClientError as e:
       if e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
         return None
       else:
         raise
 
-  def put_context(self, uid: int, context: HandlingContext):
-    o = self.bucket.Object(self._get_name(str(uid)))
-    o.put(json.dumps(context))
+  def put_context(self, context: HandlingContext):
+    o = self.bucket.Object(self._get_name(str(context.uid)))
+    o.put(context.to_json_string())
 
 async def do_handle(event, context):
   try:

@@ -36,13 +36,13 @@ class HandlingContext:
   def get_custom(self, key:str):
     return self.custom[key]
 
-  def to_string(self) -> str:
+  def to_json_string(self) -> str:
     cop = self.__dict__.copy()
     decimal_to_int_for_shallow_graph(cop)
     return json.dumps(cop)
 
   @staticmethod
-  def from_string(json_s:str):
+  def from_json_string(json_s:str):
     dic = json.loads(json_s)
     ctx = HandlingContext(123, 'dummy')
     ctx.__dict__ = dic
@@ -187,10 +187,9 @@ class BaseContextStore:
     """
     pass
 
-  def put_context(self, uid: int, context: HandlingContext) -> None:
+  def put_context(self, context: HandlingContext) -> None:
     """
     Updates the stored context
-    :param uid:
     :param context:
     :return:
     """
@@ -245,7 +244,7 @@ class MainHandler:
         context.move_to_next()  # increase the step
       else:
         context.override_step(result.step_override)  # change the step
-      self.store.put_context(uid, context)
+      self.store.put_context(context)
     if result.is_terminal:
       self.store.clear_context(uid)
     return result
