@@ -23,6 +23,9 @@ class CommandThreeHandler(BaseHandler):
   async def does_not_matter_2(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     return HandlingResult.terminal_result()
 
+  @step_number(2)
+  async def i_said_does_not_matter(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+    return HandlingResult.terminal_result()
 
 class SimpleWorkflowTests(unittest.IsolatedAsyncioTestCase):
 
@@ -48,3 +51,10 @@ class SimpleWorkflowTests(unittest.IsolatedAsyncioTestCase):
     r3 = await h.handle(123, 'doesnt matter!', None)
     self.assertEqual(True, r3.handled)
     self.assertEqual(True, r3.is_terminal)
+
+  async def test_handler(self):
+    h = CommandThreeHandler()
+    result = await h.handle('n', None, HandlingContext(123, 'n'))
+    self.assertEqual(1, len(h.step_handlers[0]))
+    self.assertEqual(1, len(h.step_handlers[1]))
+    self.assertEqual(2, len(h.step_handlers[2]))

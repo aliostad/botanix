@@ -23,7 +23,7 @@ class HelpHandler(BaseHandler):
     /help to see this menu
     /register to register with us
     """)
-    return HandlingResult.success_result()
+    return HandlingResult.terminal_result()
 
 
 class StartHandler(BaseHandler):
@@ -71,6 +71,7 @@ class RegisterHandler(BaseHandler):
       await self.bot.send_message(context.uid, "Please provide your surname:")
       return HandlingResult.success_result()
 
+
   @step_number(2)
   async def ask_for_email(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     surnam = command.strip()
@@ -82,8 +83,9 @@ class RegisterHandler(BaseHandler):
       await self.bot.send_message(context.uid, "Please provide your email:")
       return HandlingResult.success_result()
 
+
   @step_number(3)
-  async def ask_for_email(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
+  async def final_check(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     email = command.strip()
     if re.match('.+@.+\..+', email) is None:
       await self.bot.send_message(context.uid, "Not a valid email. Try again.")
@@ -137,7 +139,7 @@ class S3ContextStore(BaseContextStore):
 
   def put_context(self, context: HandlingContext):
     o = self.bucket.Object(self._get_name(str(context.uid)))
-    o.put(context.to_json_string())
+    o.put(Body=context.to_json_string())
 
 async def do_handle(event, context):
   try:
@@ -160,7 +162,6 @@ async def do_handle(event, context):
       try:
         result = await m.handle(uid, message, u)
         if not result.handled:
-          await bot.send_message(uid, text='Sorry did not get it.')
           print(result.unhandled_message)
       except Exception as ex:
         traceback.print_exc()

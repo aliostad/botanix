@@ -126,7 +126,7 @@ class BaseHandler:
   handler_method_pattern = '[_A-Za-z0-9]+_(\d+)'
 
   def __init__(self):
-    self.step_handlers = None
+    self.step_handlers:dict = None
 
   async def handle(self, command: str, update: Update, context: HandlingContext) -> HandlingResult:
     self.ensure_steps_built()
