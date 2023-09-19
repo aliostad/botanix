@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='botanix',
-    version='0.3.0',
+    version='0.3.1',
     license='MIT',
     author="Ali Kheyrollahi",
     author_email='aliostad@gmail.com',

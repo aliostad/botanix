@@ -151,12 +151,8 @@ class BaseHandler:
         if command == '*':
           return await h(command, update, context)
 
-    # if it gets here, then it will try all of them
-    for h in self.step_handlers[step]:
-      last_result = await h(command, update, context)
-      if last_result.handled:
-        return last_result # break out
-    return last_result
+      # if it gets here, then it will try all of them
+      raise UnhandledMessage()
 
   def get_class_name(self):
     if hasattr(self.__class__, 'track_name'):
