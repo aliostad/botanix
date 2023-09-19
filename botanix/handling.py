@@ -148,7 +148,7 @@ class BaseHandler:
           return await h(command, update, context)
       # then try based on wildcard
       for h in hs:
-        if command == '*':
+        if h.expected_command == '*':
           return await h(command, update, context)
 
       # if it gets here, then it will try all of them
