@@ -98,9 +98,10 @@ def track_name(name: str):
     return cls
   return real_track_name_fn
 
-def step_number(step:int):
+def step_number(step:int, expected_command:str=None):
   def real_step_number(fn):
     setattr(fn, 'step_number', step)
+    setattr(fn, 'expected_command', expected_command)
     return fn
   return real_step_number
 
@@ -136,6 +137,21 @@ class BaseHandler:
       raise UnhandledMessage(
         f'Step {step} does not exist in class {self.__class__.__name__}. Command was {command} and user id {uid}')
     last_result = HandlingResult.success_result()
+    hs = self.step_handlers[step]
+    if len(hs) == 1:
+      return await hs[0](command, update, context)
+    else: #multiple handler
+
+      # first try based on expected command
+      for h in hs:
+        if command == h.expected_command:
+          return await h(command, update, context)
+      # then try based on wildcard
+      for h in hs:
+        if command == '*':
+          return await h(command, update, context)
+
+    # if it gets here, then it will try all of them
     for h in self.step_handlers[step]:
       last_result = await h(command, update, context)
       if last_result.handled:
@@ -216,9 +232,9 @@ class MainHandler:
       self.handlers[h.get_class_name()] = h
 
   async def handle(self, uid: int, message_text: str, update: Update) -> HandlingResult:
-    message_text = message_text.lower()
+    lower_message_text = message_text.lower()
     ctx = self.store.get_active_context(uid)
-    m = re.match(MainHandler.command_pattern, message_text)
+    m = re.match(MainHandler.command_pattern, lower_message_text)
     if m is None:
       if ctx is None:
         return HandlingResult.unhandled_result('Your choice does not exist.')
@@ -243,7 +259,9 @@ class MainHandler:
       if result.step_override is None:
         context.move_to_next()  # increase the step
       else:
-        context.override_step(result.step_override)  # change the step
+        context.override_step(result.step_override)
+        if result.new_track_name is not None:
+          context.track_name = result.new_track_name
       self.store.put_context(context)
     if result.is_terminal:
       self.store.clear_context(uid)
