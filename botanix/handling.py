@@ -229,7 +229,7 @@ class MainHandler:
 
   async def handle(self, uid: int, message_text: str, update: Update) -> HandlingResult:
     if message_text is None or len(message_text) == 0:
-      message_text = ['NON-TEXT-CONTENT']
+      message_text = '[NON-TEXT-CONTENT]'
     lower_message_text = message_text.lower()
     ctx = self.store.get_active_context(uid)
     m = re.match(MainHandler.command_pattern, lower_message_text)
