@@ -34,7 +34,9 @@ class HandlingContext:
     self.step = step
 
   def get_custom(self, key:str):
-    return self.custom[key]
+    if key in self.custom:
+      return self.custom[key]
+    return None
 
   def to_json_string(self) -> str:
     cop = self.__dict__.copy()
